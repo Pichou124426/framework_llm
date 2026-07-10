@@ -1,6 +1,5 @@
 
 import requests
-import os 
 import feedparser
 
 class Indexeur :
@@ -31,7 +30,7 @@ class Indexeur :
                     "prompt": post["content"]
                 })
             if response.status_code != 200:
-                print (f"Erreur embedding   \n Code erreur : {response.status_code} ")
+                print (f"Erreur embedding n°{index}   \n Code erreur : {response.status_code} ")
                 continue
             embedding = response.json()["embedding"]
             response_storage = requests.post(endpoint_storage,
@@ -56,7 +55,7 @@ class Indexeur :
     def listening_data_db (self):
         endpoint_storage =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.collection_id}/get"
         response = requests.post(endpoint_storage, 
-            json={"ids": [],"include": ["documents", "embeddings"]})
+            json={"include": ["documents", "embeddings"]})
         print (response.json())
     
     

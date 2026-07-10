@@ -1,6 +1,6 @@
 import requests
 
-class initialisation :
+class Initialisation :
     def __init__(self,nom_collection):
         self.nom_collection = nom_collection
         self.id_collection = None
@@ -25,7 +25,10 @@ class initialisation :
             else :
                 print (f"Code erreur : {requete.status_code} : {data}")
     
-    def recuperer(self) :
+    def recover_id (self) :
+        return self.id_collection
+    
+    def recuperer_nom(self) :
         endpoint = f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.nom_collection}"
         requete = requests.get(endpoint, json={})
         data = requete.json()
@@ -56,13 +59,7 @@ class initialisation :
         
                     
         
-        
-init = initialisation("rag_cgi")
-init.creation()
-init.afficher_informations()
-
-
-
+   
 
 
 
