@@ -1,6 +1,7 @@
 
 import requests
 import feedparser
+import re
 
 class Indexeur :
     def __init__(self, flux_rss, collection_id) :
@@ -14,8 +15,20 @@ class Indexeur :
         for post in feed.entries : 
             article_title = post.title
             article_content = post.description
-            list_article.append({"title": article_title, "content": article_content})
+            sensibilty_label = self.classify(article_content)
+            list_article.append({"title": article_title, "content": article_content, "sensibility": sensibilty_label})
         return list_article
+
+    def classify (self, text : str) :
+            lower_text = text.lower()
+            clean_text = re.sub(r'\s+', ' ', lower_text).strip()
+            forbidden_word = ["paraguay", "argentine", "argentin", "lionel","messi"]
+            sensibility = "easy"
+            for word in forbidden_word :
+                if word in  clean_text :
+                    sensibility = "critical"
+                    break
+            return sensibility
 
         
     def insert_data (self) :
@@ -45,25 +58,39 @@ class Indexeur :
                     "ids" : [
                         post["title"]
                            
+                    ],
+                    "metadatas": [
+                        {"sensibility": post["sensibility"]}
                     ]
                 } )
             if response_storage.status_code not in [200,201] :
                 print(f"Erreur stockage \n Code d'erreur : {response_storage.status_code}")
+                print(f"Détail : {response_storage.text}")
                 continue
             print (f"Reussit ! indexe correctement. \n ({index + 1}/{len(data)}) ")
         
     def listening_data_db (self):
         endpoint_storage =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.collection_id}/get"
         response = requests.post(endpoint_storage, 
-            json={"include": ["documents", "embeddings"]})
+            json={"include": ["documents", "metadatas"]})
         print (response.json())
+
+    def clear_all_data (self) :
+        endpoint =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.collection_id}"
+        response = requests.delete (endpoint, json={})
+        if response.status_code == 200 :
+            print ("Collection effacée avec succés.")
+        else : 
+            print(f"Code d'erreur: {response.status_code}")
+
+
     
     
-    
         
         
         
         
         
+
 
 
