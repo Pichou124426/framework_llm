@@ -14,7 +14,7 @@ class Retriever :
         data = response.json()
         return data["embedding"]
     
-    def retriever ( self, query: str, top_k_init: int = 5, use_reranker : bool = False ) :
+    def retriever ( self, query: str, top_k_init: int = 5, use_reranker : bool = False,) :
         embedding_user = self.embed(query)
         endpoint_query =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.id_collection}/query"
        
