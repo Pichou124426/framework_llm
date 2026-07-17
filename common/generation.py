@@ -7,9 +7,9 @@ class Generation :
         self.collection_id = collection_id
         self.retriever_instance = Retriever(self.collection_id)
     
-    def chat (self) :
+    def chat (self, query ) :
         endpoint_chat = 'http://localhost:11434/api/chat'
-        user_input = input("Posez votre question : ")
+        user_input = query
         chunks_list, metadatas_list, distances_list = self.retriever_instance.retriever(user_input,5)
         payload_llm = requests.post(endpoint_chat, json={
             "model": self.ai_model,
@@ -20,7 +20,7 @@ class Generation :
             "stream": False
         })
         data = payload_llm.json()
-        return print(data["message"]["content"])
+        return (data["message"]["content"])
 
 
         
