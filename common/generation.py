@@ -10,7 +10,7 @@ class Generation :
     def chat (self) :
         endpoint_chat = 'http://localhost:11434/api/chat'
         user_input = input("Posez votre question : ")
-        chunks_list, metadatas_list = self.retriever_instance.retriever(user_input,5)
+        chunks_list, metadatas_list, distances_list = self.retriever_instance.retriever(user_input,5)
         payload_llm = requests.post(endpoint_chat, json={
             "model": self.ai_model,
             "messages": [

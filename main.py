@@ -2,17 +2,14 @@ from common.initialisation import Initialisation
 from common.indexation import Indexeur
 from common.retriever import Retriever
 from common.generation import Generation
+from attack.Membership_Inference import MembershipInference
 
 rag_db = Initialisation("CGI_collection")
 rag_db.creation()
 rag_db.afficher_informations()
 
+attaque = MembershipInference("Membership Attack", "Test de presence d'un chunk dans la base vectorielle", rag_db.recover_id())
+attaque.launcher()
 
 
-""" rag_index = Indexeur("https://rmcsport.bfmtv.com/rss/football/coupe-du-monde/", rag_db.recover_id())
-rag_index.insert_data()
-rag_index.listening_data_db()   """
 
-
-chat =  Generation("llama3",rag_db.recover_id())
-chat.chat()

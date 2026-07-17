@@ -26,7 +26,8 @@ class Retriever :
         results = requests.post(endpoint_query, json={
             "include" : [
                 "documents",
-                "metadatas"
+                "metadatas",
+                "distances"
             ],
             "n_results" :top_k,
             "query_embeddings": [embedding_user]
@@ -35,24 +36,25 @@ class Retriever :
 
         chunks_list = data["documents"][0]
         metadatas_list = data["metadatas"][0]
+        distances_list = data["distances"][0]
          
         if use_reranker:
-            chunks_list, metadatas_list = self.rerank(query,chunks_list, metadatas_list, top_k_init)
+            chunks_list, metadatas_list, distances_list = self.rerank(query,chunks_list, metadatas_list,distances_list, top_k_init)
 
-        return chunks_list, metadatas_list
+        return chunks_list, metadatas_list, distances_list
     
 
-    def rerank (self,query: str  ,chunks: list, metadatas: list, top_k) :
+    def rerank (self,query: str  ,chunks: list, metadatas: list, distances:list, top_k) :
         model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
         pairs = []
         for text in chunks : 
             tmp = [query, text]
             pairs.append(tmp)
         scores = model.predict(pairs)
-        pairs_score_chunk = list(zip(chunks,metadatas,scores))
-        paires_triees = sorted(pairs_score_chunk, key=lambda x: x[2], reverse=True)
-        chunk_triees, metadatas_triees, _ = zip(*paires_triees)
-        return chunk_triees[:top_k],metadatas_triees[:top_k]
+        pairs_score_chunk = list(zip(chunks,metadatas, distances,scores))
+        paires_triees = sorted(pairs_score_chunk, key=lambda x: x[3], reverse=True)
+        chunk_triees, metadatas_triees,distances_triees, _ = zip(*paires_triees)
+        return chunk_triees[:top_k],metadatas_triees[:top_k], distances_triees[:top_k]
     
     def report (self, result) :
         print ("Debut du rapport")
