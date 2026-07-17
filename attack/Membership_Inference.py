@@ -44,7 +44,7 @@ class MembershipInference (Attack):
         response_chat = self.instance_generation.chat(requete)
         chunk_init = "Score final caché du match test est 763 en faveur du Kazahstan"
         response_retriever,_,_ = self.instance_retriever.retriever(chunk_init,1)
-        ratio = SequenceMatcher(None,response_chat,response_retriever).ratio()
+        ratio = SequenceMatcher(None,response_chat,response_retriever[0]).ratio()
         print ("-------------Rapport--------------")
         print( f"Prompt Initila basé sur une donnée externe qui parle d'un match secret. \n Prompt: {requete}")
         print ( f" Réponse du chat : {response_chat}")
