@@ -1,0 +1,288 @@
+// ============================================================
+// NEO4J QUERIES — RAG Security Meta-Model v5.2
+// ============================================================
+// Copy-paste these queries into Neo4j Browser after importing import.cypher.
+// Labels: RAG, Surface, Attack, Weakness, Risk, Mitigation, CIA
+// Relations: EXPOSES, ENABLES, EXPLOITS, GENERATES, MITIGATES, CORRECTS, AFFECTS
+// ============================================================
+
+
+// === OVERVIEW ===
+
+// Full graph
+MATCH (n)-[r]->(m) RETURN n, r, m;
+
+// Count entities by type
+MATCH (n)
+RETURN labels(n)[0] AS type, count(n) AS count
+ORDER BY count DESC;
+
+// Count relations by type
+MATCH ()-[r]->()
+RETURN type(r) AS relation, count(r) AS count
+ORDER BY count DESC;
+
+
+// === VIEW V1: ARCHITECT (5 entities, 4 relations) ===
+// Projected: RAG, Surface, Attack, Weakness, Mitigation
+// Relations: EXPOSES, ENABLES, EXPLOITS, CORRECTS
+// Hidden: Risk, CIA
+// Chain: RAG → Surface → Attack → Weakness ← Mitigation
+
+// V1 graph (full view)
+MATCH (a)-[r:EXPOSES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:ENABLES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:EXPLOITS]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:CORRECTS]->(b) RETURN a, r, b;
+
+// V1 tabular variant
+MATCH (rag:RAG)-[:EXPOSES]->(s:Surface)-[:ENABLES]->(a:Attack)-[:EXPLOITS]->(w:Weakness)
+OPTIONAL MATCH (m:Mitigation)-[:CORRECTS]->(w)
+RETURN rag.id AS rag_type, s.id AS surface,
+       a.id AS attack, a.name AS technique,
+       w.id AS weakness, collect(DISTINCT m.id) AS corrective_mitigations
+ORDER BY s.id, a.id;
+
+
+// === VIEW V2: CISO (4 entities, 4 relations) ===
+// Projected: Attack, Weakness, Risk, Mitigation
+// Relations: EXPLOITS, GENERATES, MITIGATES, CORRECTS
+// Hidden: RAG, Surface, CIA
+// Chain: Attack → Weakness → Risk ← Mitigation (+ Mitigation → Weakness)
+
+// V2 graph (full view)
+MATCH (a)-[r:EXPLOITS]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:GENERATES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:MITIGATES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:CORRECTS]->(b) RETURN a, r, b;
+
+// V2 tabular variant
+MATCH (a:Attack)-[:EXPLOITS]->(w:Weakness)
+MATCH (a)-[:GENERATES]->(r:Risk)
+OPTIONAL MATCH (m:Mitigation)-[:MITIGATES]->(r)
+RETURN r.id AS risk, r.name AS consequence, a.category AS category,
+       a.id AS attack, w.id AS weakness,
+       collect(DISTINCT m.id) AS mitigations,
+       CASE WHEN size(collect(DISTINCT m.id)) = 0 THEN 'GAP' ELSE 'COVERED' END AS status
+ORDER BY r.id;
+
+
+// === VIEW V2b: COVERAGE GAPS — Risks with no mitigation ===
+
+MATCH (r:Risk) WHERE NOT (r)<-[:MITIGATES]-(:Mitigation)
+OPTIONAL MATCH (a:Attack)-[:GENERATES]->(r)
+RETURN r.id AS risk, r.name AS consequence, a.id AS attack, r.asset AS asset;
+// Expected: R17, R33, R34, R35, R36 (5 documented gaps)
+
+
+// === VIEW V3: PENTESTER (6 entities, 6 relations) ===
+// Projected: RAG, Surface, Attack, Weakness, Risk, Mitigation
+// Relations: EXPOSES, ENABLES, EXPLOITS, GENERATES, MITIGATES, CORRECTS
+// Hidden: CIA only
+// Union of V1 + V2: full chain
+
+// V3 graph (full view)
+MATCH (a)-[r:EXPOSES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:ENABLES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:EXPLOITS]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:GENERATES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:MITIGATES]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:CORRECTS]->(b) RETURN a, r, b;
+
+// V3 tabular variant
+MATCH (rag:RAG)-[:EXPOSES]->(s:Surface)-[:ENABLES]->(a:Attack)-[:EXPLOITS]->(w:Weakness)
+MATCH (a)-[:GENERATES]->(r:Risk)
+OPTIONAL MATCH (m:Mitigation)-[:MITIGATES]->(r)
+OPTIONAL MATCH (m)-[:CORRECTS]->(w)
+RETURN rag.id AS rag_type, s.id AS surface,
+       a.id AS attack, a.name AS technique, a.category AS category,
+       w.id AS weakness, r.id AS risk, r.name AS consequence,
+       collect(DISTINCT m.id) AS mitigations
+ORDER BY s.id, a.id;
+
+
+// === VIEW V4: DPO (3 entities, 2 relations, + asset filter) ===
+// Projected: Risk, CIA, Mitigation
+// Relations: AFFECTS, MITIGATES
+// Hidden: RAG, Surface, Attack, Weakness
+// Chain: Risk → CIA, Mitigation → Risk
+
+// V4 graph (full view)
+MATCH (a)-[r:AFFECTS]->(b) RETURN a, r, b
+UNION
+MATCH (a)-[r:MITIGATES]->(b) RETURN a, r, b;
+
+// V4 tabular variant
+MATCH (r:Risk)-[:AFFECTS]->(c:CIA)
+OPTIONAL MATCH (m:Mitigation)-[:MITIGATES]->(r)
+RETURN r.id AS risk, r.name AS consequence, r.asset AS asset,
+       c.id AS cia, collect(DISTINCT m.id) AS mitigations,
+       CASE WHEN size(collect(DISTINCT m.id)) = 0 THEN 'GAP' ELSE 'COVERED' END AS status
+ORDER BY r.asset, r.id;
+
+// V4 summary by asset
+MATCH (r:Risk)-[:AFFECTS]->(c:CIA)
+OPTIONAL MATCH (m:Mitigation)-[:MITIGATES]->(r)
+WITH r.asset AS asset, r,
+     CASE WHEN NOT (r)<-[:MITIGATES]-(:Mitigation) THEN 1 ELSE 0 END AS gap
+RETURN asset, count(r) AS risk_count, sum(gap) AS gap_count
+ORDER BY risk_count DESC;
+
+
+// === CATEGORY ANALYSIS ===
+
+// Attacks by category
+MATCH (a:Attack)
+RETURN a.category AS category, count(a) AS count
+ORDER BY count DESC;
+
+// Mitigations by type
+MATCH (m:Mitigation)
+RETURN m.type AS type, count(m) AS count
+ORDER BY count DESC;
+
+// Mitigations by type and category
+MATCH (m:Mitigation)
+RETURN m.type AS type, m.category AS category, count(m) AS count
+ORDER BY type, category;
+
+
+// === WEAKNESS ANALYSIS ===
+
+// Most exploited weaknesses
+MATCH (a:Attack)-[:EXPLOITS]->(w:Weakness)
+RETURN w.id AS cwe, w.name AS name, count(a) AS exploiting_attacks
+ORDER BY exploiting_attacks DESC;
+
+// PREVENTIVE mitigations correcting a given CWE
+MATCH (m:Mitigation)-[:CORRECTS]->(w:Weakness {id: 'CWE-1427'})
+RETURN m.id, m.name, m.type;
+
+// CWEs with no CORRECTS link (structural gaps)
+MATCH (w:Weakness) WHERE NOT (w)<-[:CORRECTS]-(:Mitigation)
+RETURN w.id, w.name;
+
+
+// === CASCADE / SECONDARY RISKS ===
+
+// Attacks with multiple risk impacts (primary + secondary)
+MATCH (a:Attack)-[g:GENERATES]->(r:Risk)
+WITH a, collect({risk: r.id, type: g.type, name: r.name}) AS impacts
+WHERE size(impacts) > 1
+RETURN a.id AS attack, a.name AS technique, impacts;
+
+
+// === RAG-TYPE FILTERING ===
+
+// GraphRAG-specific risks
+MATCH (a:Attack {rag_specific: 'GRAPHRAG'})-[:GENERATES]->(r:Risk)
+RETURN a.id, a.name, r.id, r.name;
+
+// MULTIMODAL-specific risks
+MATCH (a:Attack {rag_specific: 'MULTIMODAL'})-[:GENERATES]->(r:Risk)
+RETURN a.id, a.name, r.id, r.name;
+
+// Risks without attack (non-adversarial)
+MATCH (r:Risk {has_attack: false})
+RETURN r.id, r.name, r.asset, r.cia;
+
+
+// === CONTEXT-DEPENDENT RISK FILTERING (Algorithm 1) ===
+// Requires import_filtering.cypher to be loaded first.
+
+// --- Graph: full filtering layer with risks, mitigations, and causal chains ---
+// Shows PropertyValue → (effect) → Risk → upstream Attack and downstream Mitigation
+MATCH (p:Property)<-[:VALUE_OF]-(pv:PropertyValue)-[e]->(r:Risk)
+WHERE type(e) IN ['ELIMINATES', 'MITIGATES', 'AGGRAVATES']
+OPTIONAL MATCH (a:Attack)-[g:GENERATES]->(r)
+OPTIONAL MATCH (m:Mitigation)-[mt:MITIGATES]->(r)
+RETURN p, pv, e, r, a, g, m, mt;
+
+// --- Graph: single property value with full risk context ---
+// Change property/value to explore. Shows the affected risks with
+// their attacks, weaknesses, mitigations, and CIA impact.
+MATCH (pv:PropertyValue {property: 'P1', value: 'TEXTUAL'})-[e]->(r:Risk)
+WHERE type(e) IN ['ELIMINATES', 'MITIGATES', 'AGGRAVATES']
+OPTIONAL MATCH (a:Attack)-[g:GENERATES]->(r)
+OPTIONAL MATCH (a)-[ex:EXPLOITS]->(w:Weakness)
+OPTIONAL MATCH (m:Mitigation)-[mt:MITIGATES]->(r)
+OPTIONAL MATCH (r)-[af:AFFECTS]->(c:CIA)
+RETURN pv, e, r, a, g, ex, w, m, mt, af, c;
+
+// --- Graph: configuration risk profile with full context ---
+// Replace values to match your deployment.
+// Displays affected risks with their attacks, mitigations, and CIA.
+WITH {P1: 'TEXTUAL', P2: 'OPEN', P3: 'PUBLIC',
+      P4: 'false', P5: 'CLOUD', P6: 'false'} AS config
+MATCH (pv:PropertyValue)-[e]->(r:Risk)
+WHERE type(e) IN ['ELIMINATES', 'MITIGATES', 'AGGRAVATES']
+  AND ((pv.property = 'P1' AND pv.value = config.P1)
+    OR (pv.property = 'P2' AND pv.value = config.P2)
+    OR (pv.property = 'P3' AND pv.value = config.P3)
+    OR (pv.property = 'P4' AND pv.value = config.P4)
+    OR (pv.property = 'P5' AND pv.value = config.P5)
+    OR (pv.property = 'P6' AND pv.value = config.P6))
+OPTIONAL MATCH (a:Attack)-[g:GENERATES]->(r)
+OPTIONAL MATCH (a)-[ex:EXPLOITS]->(w:Weakness)
+OPTIONAL MATCH (m:Mitigation)-[mt:MITIGATES]->(r)
+OPTIONAL MATCH (r)-[af:AFFECTS]->(c:CIA)
+RETURN pv, e, r, a, g, ex, w, m, mt, af, c;
+
+// --- Table view: risk profile summary for a configuration vector ---
+WITH {P1: 'TEXTUAL', P2: 'OPEN', P3: 'PUBLIC',
+      P4: 'false', P5: 'CLOUD', P6: 'false'} AS config
+OPTIONAL MATCH (pv1:PropertyValue)-[:ELIMINATES]->(re:Risk)
+WHERE (pv1.property = 'P1' AND pv1.value = config.P1)
+   OR (pv1.property = 'P2' AND pv1.value = config.P2)
+   OR (pv1.property = 'P3' AND pv1.value = config.P3)
+   OR (pv1.property = 'P4' AND pv1.value = config.P4)
+   OR (pv1.property = 'P5' AND pv1.value = config.P5)
+   OR (pv1.property = 'P6' AND pv1.value = config.P6)
+WITH config, collect(DISTINCT re.id) AS eliminated
+OPTIONAL MATCH (pv2:PropertyValue)-[:MITIGATES]->(rm:Risk)
+WHERE (pv2.property = 'P1' AND pv2.value = config.P1)
+   OR (pv2.property = 'P2' AND pv2.value = config.P2)
+   OR (pv2.property = 'P3' AND pv2.value = config.P3)
+   OR (pv2.property = 'P4' AND pv2.value = config.P4)
+   OR (pv2.property = 'P5' AND pv2.value = config.P5)
+   OR (pv2.property = 'P6' AND pv2.value = config.P6)
+WITH config, eliminated, collect(DISTINCT rm.id) AS mitigated
+OPTIONAL MATCH (pv3:PropertyValue)-[:AGGRAVATES]->(ra:Risk)
+WHERE (pv3.property = 'P1' AND pv3.value = config.P1)
+   OR (pv3.property = 'P2' AND pv3.value = config.P2)
+   OR (pv3.property = 'P3' AND pv3.value = config.P3)
+   OR (pv3.property = 'P4' AND pv3.value = config.P4)
+   OR (pv3.property = 'P5' AND pv3.value = config.P5)
+   OR (pv3.property = 'P6' AND pv3.value = config.P6)
+WITH eliminated, mitigated, collect(DISTINCT ra.id) AS aggravated
+MATCH (r:Risk)
+RETURN r.id AS Risk, r.name AS Name,
+       CASE
+         WHEN r.id IN eliminated THEN 'ELIMINATED'
+         WHEN r.id IN mitigated AND NOT r.id IN eliminated THEN 'MITIGATED'
+         WHEN r.id IN aggravated AND NOT r.id IN eliminated THEN 'AGGRAVATED'
+         ELSE 'NORMAL'
+       END AS Status
+ORDER BY r.id;
+
+
+// === EXPORT ===
+
+// Export all nodes
+MATCH (n)
+RETURN labels(n)[0] AS type, n.id, n.name, properties(n) AS props;
+
+// Export all relations
+MATCH (a)-[r]->(b)
+RETURN a.id AS source, type(r) AS relation, b.id AS target, properties(r) AS props;
