@@ -20,7 +20,7 @@ class Generation :
             "stream": False
         })
         data = payload_llm.json()
-        return (data["message"]["content"])
+        return print((data["message"]["content"]))
 
 
         

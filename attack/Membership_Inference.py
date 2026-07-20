@@ -17,7 +17,7 @@ class MembershipInference (Attack):
             self.run_black_box()
 
     def run_white_box(self) :
-       """  Nous avons auparavant reussit à injecter un document malveillante divulgant l'information suivant : "Score final caché du match test est 763 en faveur du Kazahstan" """
+       """  Nous avons auparavant reussit à injecter un document malveillante divulgant l'information suivant : "Score final caché du match test est 7-3 en faveur du Kazahstan" """
        print("------------------ Début de l'attaque Membership Inference en mode WhiteBox ----------------")
        inputs = []
        minimum = []
