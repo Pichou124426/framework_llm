@@ -4,6 +4,7 @@ from common.generation import Generation
 from common.indexation import Indexeur
 from common.initialisation import Initialisation
 from common.rag_config import RagConfig
+from common.rag_builder import build_rag
 from dataclasses import asdict
 from typing import cast
 
@@ -11,16 +12,8 @@ class Attack:
     def __init__(self, name, description, target: RagConfig):
         self.name = name
         self.description = description
-        self.rag = {}
+        self.rag = build_rag(target)
 
-        if target.retriever_config:
-            self.rag["retriever"] = Retriever(**asdict(target.retriever_config))
-        if target.generation_config:
-            self.rag["generation"] = Generation(**asdict(target.generation_config))
-        if target.indexeur_config:
-            self.rag["indexeur"] = Indexeur(**asdict(target.indexeur_config))
-        if target.initialisation_config:
-            self.rag["initialisation"] = Initialisation(**asdict(target.initialisation_config))
     @property
     def retriever(self) -> Retriever:
         return cast(Retriever, self.rag["retriever"])
