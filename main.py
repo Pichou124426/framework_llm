@@ -17,7 +17,7 @@ target = RagConfig(
         ai_model="llama3",
         collection_id=collection_id,
         balise_system=True,
-        user_admin=False,
+        user_admin=True,
         pre_generation=True,
         post_generation=True
     )

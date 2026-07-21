@@ -20,6 +20,7 @@ class Post_generation :
 
                 if ratio > 0.7:
                     print("Début de la reformulation de la réponse initiale !")
+                    print(" Cause : Detection de fuite de données sources")
                     payload_reformulation = requests.post(endpoint_chat, json={
                         "model": self.modele_ia,
                         "messages": [
