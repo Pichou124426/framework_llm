@@ -7,6 +7,7 @@ class Post_generation :
         self.counter = 1
 
      def fuite_verbatim(self, chunk_list, llm_response):
+        print(f"Debut de l'analyse de fuite verbalism numéro {self.counter} !")
         endpoint_chat = 'http://localhost:11434/api/chat'
         tmp_response_llm = llm_response
 

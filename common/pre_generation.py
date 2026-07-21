@@ -7,7 +7,7 @@ class Pre_generation:
             new_chunks_list = []
             pairs_chunk_metatdata= list(zip(chunks_list,metadatas_list))
             for chunk, permission in pairs_chunk_metatdata :
-                print(f"Chunk: {chunk} avec la permission : {permission}")
+                print(f"Chunk avec la permission : {permission}")
                 if  self.user_is_admin != True :
                     if permission["sensibility"] == "easy" :
                         new_chunks_list.append(chunk)
@@ -16,4 +16,5 @@ class Pre_generation:
                 else : 
                     new_chunks_list = chunks_list
             print (" Fin de l'analyse ! ")
+            print (f"Nombre de chunks retenues : {len(new_chunks_list)} chunks.")
             return new_chunks_list

@@ -1,9 +1,10 @@
 from sentence_transformers import CrossEncoder
 import requests
 class Retriever : 
-    def __init__(self, id_collection, embedding_model ="nomic-embed-text"):
+    def __init__(self, id_collection, embedding_model ="nomic-embed-text", use_reranker: bool = False):
         self.id_collection = id_collection
         self.embedding_model = embedding_model
+        self.use_reranker = use_reranker
     
     def embed(self, text: str ) -> list[float] :
         endpoint_embedding = "http://localhost:11434/api/embeddings"
@@ -14,7 +15,10 @@ class Retriever :
         data = response.json()
         return data["embedding"]
     
-    def retriever ( self, query: str, top_k_init: int = 5, use_reranker : bool = False,) :
+    def retriever ( self, query: str, top_k_init: int = 5, use_reranker : bool = None,) :
+        if use_reranker is None :
+            use_reranker = self.use_reranker
+
         embedding_user = self.embed(query)
         endpoint_query =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.id_collection}/query"
        
@@ -56,11 +60,3 @@ class Retriever :
         chunk_triees, metadatas_triees,distances_triees, _ = zip(*paires_triees)
         return chunk_triees[:top_k],metadatas_triees[:top_k], distances_triees[:top_k]
     
-    def report (self, result) :
-        print ("Debut du rapport")
-        print (result)
-
-    
-
-        
-        
