@@ -6,6 +6,7 @@ class RetrieverConfig:
     id_collection: str
     embedding_model: str = "nomic-embed-text"
     use_reranker: bool = False
+    user_is_admin: bool = False
 
 
 @dataclass

@@ -1,10 +1,11 @@
 from sentence_transformers import CrossEncoder
 import requests
 class Retriever : 
-    def __init__(self, id_collection, embedding_model ="nomic-embed-text", use_reranker: bool = False):
+    def __init__(self, id_collection, embedding_model ="nomic-embed-text", use_reranker: bool = False, user_is_admin: bool = False):
         self.id_collection = id_collection
         self.embedding_model = embedding_model
         self.use_reranker = use_reranker
+        self.user_is_admin = user_is_admin
     
     def embed(self, text: str ) -> list[float] :
         endpoint_embedding = "http://localhost:11434/api/embeddings"
@@ -18,6 +19,7 @@ class Retriever :
     def retriever ( self, query: str, top_k_init: int = 5, use_reranker : bool = None,) :
         if use_reranker is None :
             use_reranker = self.use_reranker
+        where_filter = {"sensibility": "easy"} if self.user_is_admin != True else {}
 
         embedding_user = self.embed(query)
         endpoint_query =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.id_collection}/query"
@@ -34,7 +36,8 @@ class Retriever :
                 "distances"
             ],
             "n_results" :top_k,
-            "query_embeddings": [embedding_user]
+            "query_embeddings": [embedding_user],
+            "where": where_filter
         })
         data = results.json()
 
