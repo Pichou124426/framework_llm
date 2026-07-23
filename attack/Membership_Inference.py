@@ -1,6 +1,4 @@
 from  attack.attack import Attack
-from common.retriever import Retriever
-from common.generation import Generation
 from difflib import SequenceMatcher
 
 class MembershipInference (Attack):
