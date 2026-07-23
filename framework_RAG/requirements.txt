@@ -1,0 +1,8 @@
+requests
+feedparser
+sentence-transforme
+
+---- flux rss ----
+https://rmcsport.bfmtv.com/rss/football/euro/
+https://rmcsport.bfmtv.com/rss/football/
+https://rmcsport.bfmtv.com/rss/football/coupe-du-monde/
