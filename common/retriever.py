@@ -7,7 +7,7 @@ class Retriever :
         self.use_reranker = use_reranker
         self.user_is_admin = user_is_admin
     
-    def embed(self, text: str ) -> list[float] :
+    def embed(self, text: str ):
         endpoint_embedding = "http://localhost:11434/api/embeddings"
         response = requests.post (endpoint_embedding, json = {
             "model" : self.embedding_model,
@@ -16,15 +16,13 @@ class Retriever :
         data = response.json()
         return data["embedding"]
     
-    def retriever ( self, query: str, top_k_init: int = 5, use_reranker : bool = None,) :
-        if use_reranker is None :
-            use_reranker = self.use_reranker
+    def retriever ( self, query: str, top_k_init: int = 5) :
         where_filter = {"sensibility": "easy"} if self.user_is_admin != True else {}
 
         embedding_user = self.embed(query)
         endpoint_query =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.id_collection}/query"
        
-        if use_reranker: 
+        if self.use_reranker: 
             top_k = top_k_init*3
         else :
             top_k= top_k_init
@@ -45,7 +43,7 @@ class Retriever :
         metadatas_list = data["metadatas"][0]
         distances_list = data["distances"][0]
          
-        if use_reranker:
+        if self.use_reranker:
             chunks_list, metadatas_list, distances_list = self.rerank(query,chunks_list, metadatas_list,distances_list, top_k_init)
 
         return chunks_list, metadatas_list, distances_list

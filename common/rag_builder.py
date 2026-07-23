@@ -1,4 +1,3 @@
-# rag_builder.py
 from dataclasses import asdict
 from common.retriever import Retriever
 from common.generation import Generation

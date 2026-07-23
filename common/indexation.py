@@ -75,13 +75,7 @@ class Indexeur :
             json={"include": ["documents", "metadatas"]})
         print (response.json())
 
-    def clear_all_data (self) :
-        endpoint =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.collection_id}"
-        response = requests.delete (endpoint, json={})
-        if response.status_code == 200 :
-            print ("Collection effacée avec succés.")
-        else : 
-            print(f"Code d'erreur: {response.status_code}")
+
 
 
     

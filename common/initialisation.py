@@ -25,19 +25,10 @@ class Initialisation :
             else :
                 print (f"Code erreur : {requete.status_code} : {data}")
     
-    def recover_id (self) :
+    def recuperer_id (self) :
         return self.id_collection
     
-    def recuperer_nom(self) :
-        endpoint = f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.nom_collection}"
-        requete = requests.get(endpoint, json={})
-        data = requete.json()
-        if requete.status_code == 200 :
-            self.id_collection = data["id"]
-            print (f"Collection récupéré: {self.nom_collection}")
-        else:
-            print(f"Collection inconnue au nom de {self.nom_collection}")
-        
+
     def afficher_informations(self) :
         if self.nom_collection and self.id_collection :
             print(f"Nom: {self.nom_collection}\n Id: {self.id_collection}")
