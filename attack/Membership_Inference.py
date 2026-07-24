@@ -23,7 +23,7 @@ class MembershipInference (Attack):
        biased_input = "Quelle est le score du match test contre le Kazahstan ?  "
        inputs.append(biased_input)
        for query in inputs :
-           _,_,response = self.rag["retriever"].retriever(query,5,False)
+           _,_,response = self.rag["retriever"].retriever(query,5)
            minimum_query = min(response)
            minimum.append(minimum_query)
        print ("------------------ Rapport ------------ ")
