@@ -16,35 +16,33 @@ class Retriever :
         data = response.json()
         return data["embedding"]
     
-    def retriever ( self, query: str, top_k_init: int = 5) :
-        where_filter = {"sensibility": "easy"} if self.user_is_admin != True else {}
-
+    def retriever(self, query: str, top_k_init: int = 5):
         embedding_user = self.embed(query)
-        endpoint_query =  f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.id_collection}/query"
-       
-        if self.use_reranker: 
-            top_k = top_k_init*3
-        else :
-            top_k= top_k_init
+        endpoint_query = f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.id_collection}/query"
 
-        results = requests.post(endpoint_query, json={
-            "include" : [
-                "documents",
-                "metadatas",
-                "distances"
-            ],
-            "n_results" :top_k,
+        if self.use_reranker:
+            top_k = top_k_init * 3
+        else:
+            top_k = top_k_init
+
+        payload = {
+            "include": ["documents", "metadatas", "distances"],
+            "n_results": top_k,
             "query_embeddings": [embedding_user],
-            "where": where_filter
-        })
+        }
+
+        if self.user_is_admin != True:
+            payload["where"] = {"sensibility": "easy"}
+
+        results = requests.post(endpoint_query, json=payload)
         data = results.json()
 
         chunks_list = data["documents"][0]
         metadatas_list = data["metadatas"][0]
         distances_list = data["distances"][0]
-         
+
         if self.use_reranker:
-            chunks_list, metadatas_list, distances_list = self.rerank(query,chunks_list, metadatas_list,distances_list, top_k_init)
+            chunks_list, metadatas_list, distances_list = self.rerank(query, chunks_list, metadatas_list, distances_list, top_k_init)
 
         return chunks_list, metadatas_list, distances_list
     
