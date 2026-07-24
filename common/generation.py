@@ -21,7 +21,7 @@ class Generation:
 
         if self.pre_generation:
             pre_generation_instance = Pre_generation(self.user_admin)
-            chunks_list = pre_generation_instance.innocuite_document(chunks_list, metadatas_list)
+            chunks_list = pre_generation_instance.check_permissions(chunks_list, metadatas_list)
 
         if self.balise_system:
             contenue_balise = ""
