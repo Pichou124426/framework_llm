@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
 from typing import Optional
 
+
 @dataclass
 class RetrieverConfig:
     id_collection: str
@@ -13,8 +14,8 @@ class RetrieverConfig:
 class GenerationConfig:
     ai_model: str
     collection_id: str
+    retriever_config : RetrieverConfig
     balise_system: bool = False
-    user_admin: bool = False
     pre_generation: bool = False
     post_generation: bool = False
 
@@ -24,12 +25,13 @@ class IndexeurConfig:
     collection_id: str
 
 @dataclass
-class InitialisationConig:
+class InitialisationConfig:
     nom_collection  : str 
 @dataclass
 class RagConfig:
+    initialisation_config: Optional[InitialisationConfig] = None
+    indexeur_config: Optional[IndexeurConfig] = None
     retriever_config: Optional[RetrieverConfig] = None
     generation_config: Optional[GenerationConfig] = None
-    indexeur_config: Optional[IndexeurConfig] = None
-    initialisation_config: Optional[InitialisationConig] = None
+    
 

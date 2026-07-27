@@ -1,15 +1,16 @@
 import requests
+from dataclasses import asdict
 from common.retriever import Retriever
+from common.rag_config import RetrieverConfig
 from common.post_generation import Post_generation
 from common.pre_generation import Pre_generation
 
 class Generation:
-    def __init__(self, ai_model, collection_id, balise_system: bool = False, user_admin: bool = False, pre_generation: bool = False, post_generation: bool = False):
+    def __init__(self, ai_model, collection_id, retriever_config : RetrieverConfig , balise_system: bool = False, pre_generation: bool = False, post_generation: bool = False):
         self.ai_model = ai_model
         self.collection_id = collection_id
         self.balise_system = balise_system
-        self.retriever_instance = Retriever(self.collection_id)
-        self.user_admin = user_admin
+        self.retriever_instance = Retriever (**retriever_config)
         self.pre_generation = pre_generation
         self.post_generation = post_generation
         self.historique = []
@@ -20,7 +21,7 @@ class Generation:
         chunks_list, metadatas_list, _ = self.retriever_instance.retriever(user_input, 5)
 
         if self.pre_generation:
-            pre_generation_instance = Pre_generation(self.user_admin)
+            pre_generation_instance = Pre_generation(self.retriever_instance.user_is_admin)
             chunks_list = pre_generation_instance.check_permissions(chunks_list, metadatas_list)
 
         if self.balise_system:
