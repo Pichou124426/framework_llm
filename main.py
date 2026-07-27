@@ -1,7 +1,6 @@
 from common.initialisation import Initialisation
 from common.rag_config import RagConfig, RetrieverConfig, GenerationConfig, IndexeurConfig, InitialisationConfig
 from attack.Membership_Inference import MembershipInference
-from debug_utils import inspect_object, inspect_rag
 
 
 # Variable Globale 
@@ -74,8 +73,3 @@ mia_black = MembershipInference(
 )
 mia_black.launcher() 
 
-""" # Pour inspecter un objet Generation en entier, avec son retriever interne
-inspect_object(target.generation_config)
-
-# Pour inspecter self.rag d'une attaque (retriever, generation, etc. côte à côte)
-inspect_rag(mia_black.rag) """
