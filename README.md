@@ -4,7 +4,7 @@
 
 Le développement de ce framework s'inscrit dans le cadre d'un stage d'une durée de 6 semaines, effectué par un étudiant en deuxième année d'école d'informatique. L'objectif est de réaliser un framework simulant un environnement RAG complet, constitué de modules indépendants dont les paramètres sont individuellement modifiables. Ce framework permet ainsi de comprendre concrètement l'impact de différentes attaques sur une architecture RAG. Le point de vue est offensif, dans l'idée de mieux comprendre les attaques et les protections efficaces afin de rendre les RAG de demain plus sécurisés.
 
-La suite de ce README est disponible en format PDF. 
+La suite de ce README est disponible en format PDF. test
 
 ---
 
