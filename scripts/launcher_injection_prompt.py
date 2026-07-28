@@ -31,6 +31,8 @@ use_indexation : bool = False
 use_retriever : bool = True
 use_generation : bool = True
 
+# Variable sur l'attaque de Prompt Injection (dan = Do anything Now, system = System Prompt Leakage, indirecte = Indirect Prompt Injection, role = Role Hijacking, contexte = Context Poisonning ou live = Live prompting )
+mode_attack = "role"
 
 "------------------------- Automatique attribution ---------------------"
 
@@ -59,5 +61,5 @@ target = RagConfig (
 
 """------------------------------------------------------------------------------"""
 
-dan = Prompt_Injection("DAN attack","bla",target,"live")
+dan = Prompt_Injection("DAN attack","bla",target,mode_attack)
 dan.launcher()
