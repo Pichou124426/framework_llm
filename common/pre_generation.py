@@ -20,4 +20,5 @@ class Pre_generation:
             return new_chunks_list
 
 """ 
-Possibilité d'ajouter une focntion innocuité des documents qui verifier garce à un modele un score dxe ocnfiance en connaissances des ignorer etc """
+Possibilité d'ajouter une focntion innocuité des documents qui verifier garce à un modele un score dxe ocnfiance en connaissances des ignorer 
+Posibilité d'ajouter une fonction qui detecter et gere l'input du user ( le prompt )"""
