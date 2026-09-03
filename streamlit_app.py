@@ -171,16 +171,17 @@ def render_explanatory_block(attack_key: str):
 
 def render_chat_page():
     st.header("💬 Chat libre — live prompting sur la cible RAG")
+
+    gen = st.session_state.rag_generation_instance
+    if not gen:
+        st.info("🔒 Aucune cible RAG construite. Rendez-vous dans l'onglet « Cible RAG & Attaques » pour en construire une avant de pouvoir discuter.")
+        return
+
     st.caption(
         "Discussion en direct avec la cible RAG construite dans l'onglet « Cible RAG & Attaques ». "
         "Chaque message traverse tout le pipeline configuré : retriever (+ reranking éventuel), "
         "guardrails, pré-génération et post-génération, exactement comme durant une attaque."
     )
-
-    gen = st.session_state.rag_generation_instance
-    if not gen:
-        st.info("Construisez d'abord une cible RAG dans l'onglet « Cible RAG & Attaques » pour pouvoir discuter avec elle.")
-        return
 
     stale = st.session_state.rag_config_snapshot != current_config_snapshot()
     if stale:
