@@ -23,6 +23,38 @@ Dans celui-ci, vous retrouverez deux dossiers principaux :
 - **`/common`**, qui vous permettra de retrouver l'ensemble des composants constituant votre RAG (initialisation, indexeur, retriever, génération…).
 - **`/attack`**, stockant les différentes attaques développées ou prévues sur les architectures RAG (Membership Inference Attack, Prompt Injection, et d'autres attaques du Top 10 OWASP à venir).
 - **`/script`**, hébergeant les différents launchers des attaques simulées. 
+- **`/ui`**, contenant le contenu pédagogique et les fonctions utilitaires de l'interface graphique.
+
+### Configuration Azure OpenAI
+
+La génération (`common/generation.py`, `common/post_generation.py`) passe par Azure OpenAI. Les embeddings
+(Retriever/Indexeur) continuent d'utiliser Ollama en local. Créez un fichier `.env` à la racine du projet
+(non versionné, voir `.gitignore`) avec :
+
+```
+AZURE_OPENAI_API_ENDPOINT=https://<votre-ressource>.openai.azure.com
+AZURE_OPENAI_API_KEY=<votre-clé>
+AZURE_OPENAI_API_VERSION=<version-api, ex: 2024-02-15-preview>
+AZURE_OPENAI_DEPLOYMENT_NAME=<nom-du-déploiement>
+```
+
+### Interface graphique (Streamlit)
+
+Une interface graphique Streamlit permet de piloter le framework sans écrire de code, utile pour une démonstration à un public non technique. Elle propose deux pages :
+
+- **Chat libre** : discussion directe avec le modèle (Azure OpenAI), indépendamment de tout pipeline RAG.
+- **Cible RAG & Attaques** : construction d'une cible RAG module par module (Initialisation, Indexation, Retriever avec reranking optionnel, Génération avec guardrails / pré- / post-génération), puis sélection et lancement d'une attaque avec un résultat structuré et un bloc pédagogique (description, contre-mesure, exemple) qui se met à jour selon l'attaque choisie.
+
+**Lancement :**
+
+```bash
+docker compose up -d          # démarre ChromaDB et Ollama
+pip install -r requirements.txt
+# créer le fichier .env (voir section Configuration Azure OpenAI ci-dessus)
+streamlit run streamlit_app.py
+```
+
+L'interface est ensuite accessible sur `http://localhost:8501`.
 
 ### Initialisation
 
