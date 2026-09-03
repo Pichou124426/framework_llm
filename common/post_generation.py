@@ -1,14 +1,32 @@
+import os
 import requests
+from dotenv import load_dotenv
 from difflib import SequenceMatcher
 
-class Post_generation :
-     def __init__(self, modele_ia):
+load_dotenv()
+
+AZURE_ENDPOINT = os.getenv("AZURE_OPENAI_API_ENDPOINT")
+AZURE_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+AZURE_VERSION = os.getenv("AZURE_OPENAI_API_VERSION")
+AZURE_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
+
+
+class Post_generation:
+    def __init__(self, modele_ia):
         self.modele_ia = modele_ia
         self.counter = 1
 
-     def fuite_verbatim(self, chunk_list, llm_response):
-        print(f"Debut de l'analyse de fuite verbalism numéro {self.counter} !")
-        endpoint_chat = 'http://localhost:11434/api/chat'
+    def fuite_verbatim(self, chunk_list, llm_response):
+        print(f"Debut de l'analyse de fuite verbatim numero {self.counter} !")
+        endpoint_chat = (
+            f"{AZURE_ENDPOINT.rstrip('/')}/openai/deployments/"
+            f"{AZURE_DEPLOYMENT}/chat/completions"
+            f"?api-version={AZURE_VERSION}"
+        )
+        headers = {
+            "Content-Type": "application/json",
+            "api-key": AZURE_KEY,
+        }
         tmp_response_llm = llm_response
 
         while self.counter <= 3:
@@ -19,28 +37,27 @@ class Post_generation :
                 print(f"Chunk {index} : Ratio = {ratio}")
 
                 if ratio > 0.7:
-                    print("Début de la reformulation de la réponse initiale !")
-                    print(" Cause : Detection de fuite de données sources")
-                    payload_reformulation = requests.post(endpoint_chat, json={
-                        "model": self.modele_ia,
+                    print("Debut de la reformulation de la reponse initiale !")
+                    print(" Cause : Detection de fuite de donnees sources")
+                    payload_reformulation = requests.post(endpoint_chat, headers=headers, json={
                         "messages": [
-                            {"role": "system", "content": f"Tu es un expert en reformulation de texte. Nous avons une réponse contenant des données sensibles : {tmp_response_llm}. Je souhaite que tu reformules cette réponse en te basant uniquement sur celle-ci."}
+                            {"role": "system", "content": f"Tu es un expert en reformulation de texte. Nous avons une reponse contenant des donnees sensibles : {tmp_response_llm}. Je souhaite que tu reformules cette reponse en te basant uniquement sur celle-ci."}
                         ],
-                        "stream": False
                     })
                     data = payload_reformulation.json()
-                    tmp_response_llm = data["message"]["content"]
+
+                    if "error" in data:
+                        raise RuntimeError(f"Erreur Azure OpenAI : {data['error']}")
+
+                    tmp_response_llm = data["choices"][0]["message"]["content"]
                     self.counter += 1
                     fuite_detectee = True
-                    break  
+                    break
 
             if not fuite_detectee:
-                print("Réponse fiable. Fin de l'étape de détection de fuite verbatim.")
+                print("Reponse fiable. Fin de l'etape de detection de fuite verbatim.")
                 return tmp_response_llm
 
         print("Nombre maximum de tentatives de reformulation atteint !")
-        tmp_response_llm = "Je ne peux pas vous fournir une réponse fiable à cette demande pour le moment."
+        tmp_response_llm = "Je ne peux pas vous fournir une reponse fiable a cette demande pour le moment."
         return tmp_response_llm
-
-    
-        

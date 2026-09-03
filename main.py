@@ -59,5 +59,5 @@ target = RagConfig (
 
 """------------------------------------------------------------------------------"""
 
-dan = Prompt_Injection("DAN attack","bla",target,"live")
+dan = Prompt_Injection("DAN attack","bla",target,"dan")
 dan.launcher()
