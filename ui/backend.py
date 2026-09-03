@@ -1,12 +1,14 @@
 """Fonctions utilitaires réseau/état utilisées par l'interface Streamlit.
 
 Séparées du reste du framework (dossier `common/`) pour ne pas mélanger la logique
-métier du RAG avec les besoins spécifiques de l'interface graphique (health-check,
-chat direct hors pipeline RAG...).
+métier du RAG avec les besoins spécifiques de l'interface graphique (health-check...).
 
 Note d'architecture : les embeddings (Retriever/Indexeur) passent toujours par Ollama
-en local, tandis que la génération (Generation/Post_generation) passe désormais par
-Azure OpenAI, configuré via les variables d'environnement du fichier `.env`.
+en local, tandis que la génération (Generation/Post_generation) passe par Azure OpenAI,
+configuré via les variables d'environnement du fichier `.env`. La page "Chat libre" de
+l'UI fait du live prompting sur la cible RAG construite (donc via `common.generation.Generation`
+directement) plutôt que d'appeler Azure OpenAI de façon indépendante — il n'y a donc pas
+de fonction de chat direct ici.
 """
 
 import os
@@ -53,34 +55,3 @@ def azure_config_status() -> dict:
 
 def check_azure_configured() -> bool:
     return all(azure_config_status().values())
-
-
-def azure_chat_direct(messages: list, timeout: float = 120.0) -> str:
-    """Appelle directement Azure OpenAI, sans passer par le pipeline RAG (page Chat libre).
-
-    `messages` est une liste de dicts {"role": ..., "content": ...}.
-    """
-    if not check_azure_configured():
-        manquantes = [k for k, present in azure_config_status().items() if not present]
-        raise RuntimeError(
-            "Configuration Azure OpenAI incomplète dans le fichier .env. Variable(s) manquante(s) : "
-            + ", ".join(manquantes)
-        )
-
-    endpoint = (
-        f"{AZURE_ENDPOINT.rstrip('/')}/openai/deployments/"
-        f"{AZURE_DEPLOYMENT}/chat/completions"
-        f"?api-version={AZURE_VERSION}"
-    )
-    headers = {"Content-Type": "application/json", "api-key": AZURE_KEY}
-    payload_messages = [{"role": m["role"], "content": m["content"]} for m in messages]
-
-    response = requests.post(endpoint, headers=headers, json={"messages": payload_messages}, timeout=timeout)
-    data = response.json()
-
-    if "error" in data:
-        raise RuntimeError(f"Erreur Azure OpenAI : {data['error']}")
-    if response.status_code != 200:
-        raise RuntimeError(f"Azure OpenAI a répondu avec le code {response.status_code} : {response.text}")
-
-    return data["choices"][0]["message"]["content"]

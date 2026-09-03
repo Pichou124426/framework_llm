@@ -1,7 +1,9 @@
 """Interface Streamlit du framework offensif RAG.
 
 Deux pages :
-- Chat libre : discussion directe avec le modèle (Azure OpenAI), hors pipeline RAG.
+- Chat libre : live prompting sur la cible RAG construite (page suivante) — chaque
+  message traverse tout le pipeline configuré (retriever, guardrails, pré/post-génération).
+  Nécessite d'avoir construit une cible au préalable.
 - Cible RAG & Attaques : construction module par module d'une cible RAG
   (Initialisation / Indexation / Retriever / Génération) puis lancement d'une
   attaque avec un résultat structuré et un bloc pédagogique associé.
@@ -16,6 +18,7 @@ Lancement : `streamlit run streamlit_app.py`
 import sys
 import os
 import traceback
+from dataclasses import asdict
 from datetime import datetime
 
 import streamlit as st
@@ -24,6 +27,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from common.initialisation import Initialisation
 from common.indexation import Indexeur
+from common.generation import Generation
 from common.rag_config import RagConfig, RetrieverConfig, GenerationConfig, IndexeurConfig, InitialisationConfig
 from attack.Membership_Inference import MembershipInference
 from attack.Prompt_Injection import Prompt_Injection
@@ -33,7 +37,6 @@ from ui.backend import (
     check_chroma as _check_chroma,
     check_azure_configured,
     azure_config_status,
-    azure_chat_direct,
     AZURE_DEPLOYMENT,
 )
 
@@ -81,8 +84,8 @@ DEFAULTS = {
     "use_postgeneration": False,
     "rag_config": None,
     "rag_config_snapshot": None,
+    "rag_generation_instance": None,
     "index_report": None,
-    "free_chat_history": [],
     "attack_family": list(FAMILIES.keys())[0],
     "attack_history": [],
     "mia_pirate_input": "Le score du match test contre le Kazakhstan",
@@ -167,46 +170,53 @@ def render_explanatory_block(attack_key: str):
 # --------------------------------------------------------------------------------------
 
 def render_chat_page():
-    st.header("💬 Chat libre avec le modèle")
+    st.header("💬 Chat libre — live prompting sur la cible RAG")
+
+    gen = st.session_state.rag_generation_instance
+    if not gen:
+        st.info("🔒 Aucune cible RAG construite. Rendez-vous dans l'onglet « Cible RAG & Attaques » pour en construire une avant de pouvoir discuter.")
+        return
+
     st.caption(
-        "Discussion directe avec le LLM via Azure OpenAI, indépendamment de tout pipeline RAG. "
-        "Idéal pour prendre en main l'assistant avant d'aborder la page de construction de cible et d'attaques."
+        "Discussion en direct avec la cible RAG construite dans l'onglet « Cible RAG & Attaques ». "
+        "Chaque message traverse tout le pipeline configuré : retriever (+ reranking éventuel), "
+        "guardrails, pré-génération et post-génération, exactement comme durant une attaque."
     )
 
-    if not check_azure_configured():
-        manquantes = [k for k, present in azure_config_status().items() if not present]
-        st.error(
-            "Configuration Azure OpenAI incomplète. Variable(s) manquante(s) dans le fichier `.env` : "
-            + ", ".join(f"`{m}`" for m in manquantes)
-        )
-        st.caption("Voir le README pour la liste complète des variables attendues.")
-        return
+    stale = st.session_state.rag_config_snapshot != current_config_snapshot()
+    if stale:
+        st.warning("⚠️ La configuration a changé depuis la dernière construction. Reconstruisez la cible (autre onglet) pour discuter avec la configuration à jour.")
 
     col_info, col_reset = st.columns([3, 1])
     with col_info:
-        st.caption(f"Modèle : déploiement Azure OpenAI `{AZURE_DEPLOYMENT}`")
+        st.caption(
+            f"Collection `{st.session_state.collection_name}` — "
+            f"guardrails {'✅' if gen.balise_system else '❌'} · "
+            f"pré-génération {'✅' if gen.pre_generation else '❌'} · "
+            f"post-génération {'✅' if gen.post_generation else '❌'} · "
+            f"reranking {'✅' if gen.retriever_instance.use_reranker else '❌'} · "
+            f"droits admin {'✅' if gen.retriever_instance.user_is_admin else '❌'}"
+        )
     with col_reset:
         if st.button("🗑️ Réinitialiser la conversation", use_container_width=True):
-            st.session_state.free_chat_history = []
+            gen.historique = []
             st.rerun()
 
-    for msg in st.session_state.free_chat_history:
+    for msg in gen.historique:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
     prompt = st.chat_input("Écrivez votre message…")
     if prompt:
-        st.session_state.free_chat_history.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
         with st.chat_message("assistant"):
-            with st.spinner("Le modèle réfléchit…"):
+            with st.spinner("Le pipeline RAG traite votre requête…"):
                 try:
-                    response = azure_chat_direct(st.session_state.free_chat_history)
+                    response = gen.chat(prompt)
                 except Exception as exc:
-                    response = f"⚠️ Erreur lors de l'appel au modèle : {exc}"
+                    response = f"⚠️ Erreur lors du traitement de la requête : {exc}"
             st.markdown(response)
-        st.session_state.free_chat_history.append({"role": "assistant", "content": response})
 
 
 # --------------------------------------------------------------------------------------
@@ -359,6 +369,9 @@ def render_rag_page():
                 retriever_config=retriever_config,
                 generation_config=generation_config,
             )
+            # Instance vivante pour le live prompting (page "Chat libre") : conserve son
+            # propre historique de conversation tant que la cible n'est pas reconstruite.
+            st.session_state.rag_generation_instance = Generation(**asdict(generation_config))
             st.session_state.rag_config_snapshot = current_config_snapshot()
             st.success("Cible RAG construite avec succès.")
         except ValueError as exc:
@@ -481,7 +494,8 @@ développé pour comprendre et démontrer des attaques sur une architecture RAG 
 Generation) : ChromaDB pour la base vectorielle, Ollama pour les embeddings, Azure OpenAI pour la génération.
 
 **Pages disponibles :**
-- **Chat libre** : discussion directe avec le modèle, sans RAG, pour prendre en main l'assistant.
+- **Chat libre** : live prompting sur la cible RAG construite dans l'autre onglet — chaque message
+  traverse tout le pipeline configuré (retriever, guardrails, pré-/post-génération).
 - **Cible RAG & Attaques** : construction d'une architecture RAG module par module (Initialisation,
   Indexation, Retriever avec reranking optionnel, Génération avec guardrails / pré- / post-génération),
   puis sélection et lancement d'une attaque (Membership Inference, Prompt Injection) avec un résultat
