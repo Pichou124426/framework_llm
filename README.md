@@ -42,7 +42,7 @@ AZURE_OPENAI_DEPLOYMENT_NAME=<nom-du-déploiement>
 
 Une interface graphique Streamlit permet de piloter le framework sans écrire de code, utile pour une démonstration à un public non technique. Elle propose deux pages :
 
-- **Chat libre** : discussion directe avec le modèle (Azure OpenAI), indépendamment de tout pipeline RAG.
+- **Chat libre** : live prompting sur la cible RAG construite dans l'autre onglet — chaque message traverse tout le pipeline configuré (retriever, guardrails, pré-/post-génération). Nécessite d'avoir construit une cible au préalable.
 - **Cible RAG & Attaques** : construction d'une cible RAG module par module (Initialisation, Indexation, Retriever avec reranking optionnel, Génération avec guardrails / pré- / post-génération), puis sélection et lancement d'une attaque avec un résultat structuré et un bloc pédagogique (description, contre-mesure, exemple) qui se met à jour selon l'attaque choisie.
 
 **Lancement :**
