@@ -21,18 +21,9 @@ class Initialisation :
                 print (f"Création prête ! Nom: {self.nom_collection}")
                 self.id_collection = data["id"]
             elif requete.status_code == 409:
-                print("Collection déjà existante ! Récupération de son identifiant...")
-                self._recuperer_id_existant()
+                print("Collection déjà existante !")
             else :
                 print (f"Code erreur : {requete.status_code} : {data}")
-
-    def _recuperer_id_existant(self):
-        endpoint = f"http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/{self.nom_collection}"
-        requete = requests.get(endpoint)
-        if requete.status_code == 200:
-            self.id_collection = requete.json()["id"]
-        else:
-            print(f"Impossible de récupérer l'identifiant existant : {requete.status_code}")
     
     def recuperer_id (self) :
         return self.id_collection
