@@ -1,6 +1,7 @@
 requests
 feedparser
-sentence-transforme
+sentence-transformers
+streamlit
 
 ---- flux rss ----
 https://rmcsport.bfmtv.com/rss/football/euro/

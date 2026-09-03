@@ -23,6 +23,24 @@ Dans celui-ci, vous retrouverez deux dossiers principaux :
 - **`/common`**, qui vous permettra de retrouver l'ensemble des composants constituant votre RAG (initialisation, indexeur, retriever, génération…).
 - **`/attack`**, stockant les différentes attaques développées ou prévues sur les architectures RAG (Membership Inference Attack, Prompt Injection, et d'autres attaques du Top 10 OWASP à venir).
 - **`/script`**, hébergeant les différents launchers des attaques simulées. 
+- **`/ui`**, contenant le contenu pédagogique et les fonctions utilitaires de l'interface graphique.
+
+### Interface graphique (Streamlit)
+
+Une interface graphique Streamlit permet de piloter le framework sans écrire de code, utile pour une démonstration à un public non technique. Elle propose deux pages :
+
+- **Chat libre** : discussion directe avec le modèle (Ollama), indépendamment de tout pipeline RAG.
+- **Cible RAG & Attaques** : construction d'une cible RAG module par module (Initialisation, Indexation, Retriever avec reranking optionnel, Génération avec guardrails / pré- / post-génération), puis sélection et lancement d'une attaque avec un résultat structuré et un bloc pédagogique (description, contre-mesure, exemple) qui se met à jour selon l'attaque choisie.
+
+**Lancement :**
+
+```bash
+docker compose up -d          # démarre ChromaDB et Ollama
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+L'interface est ensuite accessible sur `http://localhost:8501`.
 
 ### Initialisation
 
