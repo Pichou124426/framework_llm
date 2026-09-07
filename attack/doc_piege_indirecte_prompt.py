@@ -39,6 +39,3 @@ def supprimer_document(collection_id, titre):
         return
 
     print(f"Document supprimé : {titre}")
-
-supprimer_document(collection_id="d55dae35-0808-4a83-aa2f-d167139656d7",
-    titre="Document piège Injection Indirecte")

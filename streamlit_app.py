@@ -32,6 +32,7 @@ from common.rag_config import RagConfig, RetrieverConfig, GenerationConfig, Inde
 from attack.Membership_Inference import MembershipInference
 from attack.Prompt_Injection import Prompt_Injection
 from ui.catalog import ATTACK_CATALOG, FAMILIES
+from ui.context_content import PROJECT_FACTS, PIPELINE_MODULES, MODULE_DEEP_DIVES, QUIZ_QUESTIONS
 from ui.backend import (
     check_ollama as _check_ollama,
     check_chroma as _check_chroma,
@@ -482,6 +483,120 @@ def render_rag_page():
 
 
 # --------------------------------------------------------------------------------------
+# Page : Contexte & Théorie
+# --------------------------------------------------------------------------------------
+
+def render_context_page():
+    st.header("🎓 Contexte & Théorie")
+    st.caption(
+        "D'où vient ce framework, comment fonctionne un pipeline RAG, et pourquoi chacune de ses "
+        "étapes constitue une surface d'attaque. De quoi présenter le projet à un public non technique — "
+        "puis vérifier ce qu'on en a retenu."
+    )
+
+    st.markdown(
+        "> Ce framework a été développé dans le cadre d'un **stage de 6 semaines**, par un étudiant en "
+        "deuxième année d'école d'informatique. L'objectif : simuler un environnement RAG complet, "
+        "constitué de modules indépendants et reconfigurables, pour comprendre concrètement l'impact de "
+        "différentes attaques sur une architecture RAG. Le point de vue est **offensif**, dans l'idée de "
+        "mieux comprendre les attaques — et les protections efficaces — pour rendre les RAG de demain plus "
+        "sûrs."
+    )
+
+    cols = st.columns(len(PROJECT_FACTS))
+    for col, (icon, value, label) in zip(cols, PROJECT_FACTS):
+        with col:
+            st.metric(f"{icon} {value}", label)
+
+    st.divider()
+
+    st.subheader("🏗️ Le pipeline RAG, étape par étape")
+    st.caption("Chaque flèche est un point de passage — donc une surface d'attaque potentielle.")
+    n = len(PIPELINE_MODULES)
+    widths = []
+    for i in range(n):
+        widths.append(3)
+        if i < n - 1:
+            widths.append(0.6)
+    pipeline_cols = st.columns(widths)
+    module_cols = [c for i, c in enumerate(pipeline_cols) if i % 2 == 0]
+    arrow_cols = [c for i, c in enumerate(pipeline_cols) if i % 2 == 1]
+    for col, module in zip(module_cols, PIPELINE_MODULES):
+        with col:
+            with st.container(border=True):
+                st.markdown(f"#### {module['icon']}")
+                st.markdown(f"**{module['title']}**")
+                st.caption(module["summary"])
+    for col in arrow_cols:
+        with col:
+            st.markdown(
+                "<div style='text-align:center; font-size:1.6em; padding-top:2.2em;'>→</div>",
+                unsafe_allow_html=True,
+            )
+
+    with st.expander("🔬 Approfondir chaque module (rôle, limites de sécurité, hypothèses testées)"):
+        tabs = st.tabs([m["title"].split("—")[0].strip() for m in PIPELINE_MODULES])
+        for tab, deep_dive in zip(tabs, MODULE_DEEP_DIVES):
+            with tab:
+                st.markdown(deep_dive["body"])
+
+    st.divider()
+
+    st.subheader("🗡️ Les familles d'attaques simulées")
+    for family, keys in FAMILIES.items():
+        st.markdown(f"**{family}**")
+        fam_cols = st.columns(len(keys))
+        for col, key in zip(fam_cols, keys):
+            info = ATTACK_CATALOG[key]
+            with col:
+                with st.container(border=True):
+                    st.markdown(f"**{info['label']}**")
+                    st.caption("Modules : " + ", ".join(info["modules"]))
+        st.write("")
+    st.caption(
+        "Description, contre-mesure et exemple détaillés pour chacune : onglet « Cible RAG & Attaques »."
+    )
+
+    st.divider()
+
+    st.subheader("🧠 Quiz rapide")
+    st.caption("6 questions pour vérifier ce que vous avez retenu — corrigées immédiatement, sans note à la clé.")
+
+    score = 0
+    answered = 0
+    for i, q in enumerate(QUIZ_QUESTIONS):
+        st.markdown(f"**{i + 1}. {q['question']}**")
+        choice = st.radio(
+            q["question"], q["options"], index=None, key=f"quiz_{i}", label_visibility="collapsed",
+        )
+        if choice is not None:
+            answered += 1
+            if q["options"].index(choice) == q["answer"]:
+                score += 1
+                st.success(f"✅ Exact — {q['explication']}")
+            else:
+                st.error(f"❌ Pas tout à fait — {q['explication']}")
+        st.write("")
+
+    if answered:
+        st.metric("Score", f"{score} / {len(QUIZ_QUESTIONS)}", f"{answered}/{len(QUIZ_QUESTIONS)} répondues")
+    if answered == len(QUIZ_QUESTIONS):
+        if score == len(QUIZ_QUESTIONS):
+            st.balloons()
+            st.success("🏆 Sans faute ! Vous maîtrisez les bases du framework.")
+        elif score >= len(QUIZ_QUESTIONS) - 1:
+            st.info("👏 Très solide — un petit détail à revoir.")
+        else:
+            st.info("📚 Un bon début — n'hésitez pas à relire les sections ci-dessus.")
+
+    st.divider()
+    st.caption(
+        "💡 Cette page s'appuie sur le README du projet. Envoyez le rendu de stage pour l'enrichir avec "
+        "son contenu exact."
+    )
+
+
+# --------------------------------------------------------------------------------------
 # Page : À propos
 # --------------------------------------------------------------------------------------
 
@@ -516,7 +631,10 @@ Generation) : ChromaDB pour la base vectorielle, Ollama pour les embeddings, Azu
 
 with st.sidebar:
     st.title("🛡️ RAG Security Lab")
-    page = st.radio("Navigation", ["💬 Chat libre", "🎯 Cible RAG & Attaques", "ℹ️ À propos"])
+    page = st.radio(
+        "Navigation",
+        ["💬 Chat libre", "🎯 Cible RAG & Attaques", "🎓 Contexte & Théorie", "ℹ️ À propos"],
+    )
     st.divider()
     st.caption("État des services")
     ollama_ok = check_ollama()
@@ -534,5 +652,7 @@ if page == "💬 Chat libre":
     render_chat_page()
 elif page == "🎯 Cible RAG & Attaques":
     render_rag_page()
+elif page == "🎓 Contexte & Théorie":
+    render_context_page()
 else:
     render_about_page()
