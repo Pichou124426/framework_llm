@@ -5,30 +5,30 @@ notamment à partir du rendu de stage une fois disponible.
 """
 
 PROJECT_FACTS = [
-    ("⏱️", "6 semaines", "durée du stage"),
-    ("🧩", "4 modules", "Indexation, Retriever, Reranking, Génération"),
-    ("🎯", "7 attaques", "simulées et documentées"),
-    ("🔌", "2 backends", "Ollama (embeddings) + Azure OpenAI (génération)"),
+    ("⏱️", "6 semaines", ""),
+    ("🧩", "4 modules", ""),
+    ("🎯", "7 attaques", ""),
+    ("🔌", "2 backends", ""),
 ]
 
 PIPELINE_MODULES = [
     {
-        "icon": "📥",
+        "icon": "",
         "title": "M3 — Indexation",
         "summary": "Vectorisation et stockage des documents dans ChromaDB, avec classification de sensibilité dès l'insertion.",
     },
     {
-        "icon": "🔎",
+        "icon": "",
         "title": "M6 — Retriever",
         "summary": "Recherche des chunks les plus proches sémantiquement de la question, via un bi-encodeur (similarité cosinus).",
     },
     {
-        "icon": "🎯",
+        "icon": "",
         "title": "M7 — Reranking",
         "summary": "Étape optionnelle : un cross-encodeur ré-ordonne les documents candidats pour affiner leur pertinence réelle.",
     },
     {
-        "icon": "🤖",
+        "icon": "",
         "title": "M8 — Génération",
         "summary": "Le LLM formule la réponse à partir des chunks retenus, sous contrôle de guardrails et de pré-/post-génération.",
     },
@@ -36,7 +36,7 @@ PIPELINE_MODULES = [
 
 MODULE_DEEP_DIVES = [
     {
-        "title": "📥 M3 — Indexation : la porte d'entrée du RAG",
+        "title": " M3 — Indexation : la porte d'entrée du RAG",
         "body": (
             "**Rôle.** L'indexeur vectorise les documents et les stocke dans une base vectorielle "
             "(ChromaDB). C'est ici que la donnée entre dans le pipeline.\n\n"
@@ -48,7 +48,7 @@ MODULE_DEEP_DIVES = [
         ),
     },
     {
-        "title": "🔎 M6 — Retriever : comparer, pas comprendre",
+        "title": " M6 — Retriever : comparer, pas comprendre",
         "body": (
             "**Rôle.** Le retriever compare le vecteur de la question aux vecteurs de toute la base, et "
             "ne conserve que les plus proches (similarité cosinus).\n\n"
@@ -63,7 +63,7 @@ MODULE_DEEP_DIVES = [
         ),
     },
     {
-        "title": "🎯 M7 — Reranking : affiner, pas filtrer le contenu malveillant",
+        "title": " M7 — Reranking : affiner, pas filtrer le contenu malveillant",
         "body": (
             "**Rôle.** Le cross-encodeur concatène question et document (`[CLS] Question [SEP] Document "
             "[SEP]`) et laisse chaque mot du document \"voir\" chaque mot de la question (attention "
@@ -76,7 +76,7 @@ MODULE_DEEP_DIVES = [
         ),
     },
     {
-        "title": "🤖 M8 — Génération : la porte de sortie, la plus vulnérable",
+        "title": " M8 — Génération : la porte de sortie, la plus vulnérable",
         "body": (
             "**Rôle.** Dernière étape : le LLM reformule les chunks retenus en réponse. C'est là que le "
             "monde extérieur (utilisateur, modèle) et l'architecture se rencontrent — surface d'attaque "

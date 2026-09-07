@@ -118,11 +118,11 @@ def render_attack_result(result: dict):
     detail = verdict.get("detail", "")
 
     if success is True:
-        st.error(f"🔓 **{label}**\n\n{detail}")
+        st.error(f" **{label}**\n\n{detail}")
     elif success is False:
-        st.success(f"🛡️ **{label}**\n\n{detail}")
+        st.success(f" **{label}**\n\n{detail}")
     else:
-        st.info(f"ℹ️ **{label}**\n\n{detail}")
+        st.info(f"ℹ **{label}**\n\n{detail}")
 
     if verdict.get("note_technique"):
         st.caption(verdict["note_technique"])
@@ -155,7 +155,7 @@ def render_attack_result(result: dict):
 
 def render_explanatory_block(attack_key: str):
     info = ATTACK_CATALOG[attack_key]
-    st.markdown(f"#### 📚 {info['label']}")
+    st.markdown(f"####  {info['label']}")
     st.caption("Modules impliqués : " + ", ".join(info["modules"]))
     tab_desc, tab_contre, tab_exemple = st.tabs(["Description", "Contre-mesure", "Exemple"])
     with tab_desc:
@@ -175,7 +175,7 @@ def render_chat_page():
 
     gen = st.session_state.rag_generation_instance
     if not gen:
-        st.info("🔒 Aucune cible RAG construite. Rendez-vous dans l'onglet « Cible RAG & Attaques » pour en construire une avant de pouvoir discuter.")
+        st.info("⚠️ Aucune cible RAG construite. Rendez-vous dans l'onglet « Cible RAG & Attaques » pour en construire une avant de pouvoir discuter.")
         return
 
     st.caption(
@@ -225,7 +225,7 @@ def render_chat_page():
 # --------------------------------------------------------------------------------------
 
 def render_rag_page():
-    st.header("🎯 Construire une cible RAG & lancer une attaque")
+    st.header(" Construire une cible RAG & lancer une attaque")
     st.caption(
         "Assemblez la cible module par module (comme on assemblerait une architecture RAG réelle), "
         "puis choisissez une attaque à exécuter dessus."
@@ -276,7 +276,7 @@ def render_rag_page():
         else:
             st.session_state.flux_rss = flux_choice
 
-        if st.button("📥 Indexer les données", disabled=not st.session_state.collection_id):
+        if st.button(" Indexer les données", disabled=not st.session_state.collection_id):
             try:
                 with st.spinner("Récupération, vectorisation et stockage des articles…"):
                     indexeur = Indexeur(st.session_state.flux_rss, st.session_state.collection_id)
@@ -344,7 +344,7 @@ def render_rag_page():
     st.divider()
 
     build_disabled = not st.session_state.collection_id
-    if st.button("🏗️ Construire la cible RAG", type="primary", disabled=build_disabled):
+    if st.button(" Construire la cible RAG", type="primary", disabled=build_disabled):
         try:
             retriever_config = RetrieverConfig(
                 id_collection=st.session_state.collection_id,
@@ -386,7 +386,7 @@ def render_rag_page():
         stale = st.session_state.rag_config_snapshot != current_config_snapshot()
         if stale:
             st.warning("⚠️ La configuration a changé depuis la dernière construction. Reconstruisez la cible pour appliquer vos changements.")
-        with st.expander("📋 Résumé de la cible construite", expanded=False):
+        with st.expander(" Résumé de la cible construite", expanded=False):
             cfg = st.session_state.rag_config
             st.json({
                 "collection": {"nom": cfg.initialisation_config.nom_collection, "id": st.session_state.collection_id},
@@ -436,7 +436,7 @@ def render_rag_page():
         )
         extra_input = st.session_state.mia_pirate_input
 
-    if st.button("🚀 Lancer l'attaque", type="primary"):
+    if st.button(" Lancer l'attaque", type="primary"):
         try:
             with st.spinner("Attaque en cours…"):
                 if variant_key.startswith("mia_"):
@@ -467,13 +467,13 @@ def render_rag_page():
 
     if st.session_state.attack_history:
         st.divider()
-        st.subheader("📜 Résultats")
+        st.subheader(" Résultats")
         latest = st.session_state.attack_history[0]
         render_attack_result(latest)
 
         if len(st.session_state.attack_history) > 1:
             with st.expander(f"Historique ({len(st.session_state.attack_history) - 1} résultat(s) précédent(s))"):
-                if st.button("🗑️ Vider l'historique"):
+                if st.button(" Vider l'historique"):
                     st.session_state.attack_history = []
                     st.rerun()
                 for past in st.session_state.attack_history[1:]:
@@ -487,7 +487,7 @@ def render_rag_page():
 # --------------------------------------------------------------------------------------
 
 def render_context_page():
-    st.header("🎓 Contexte & Théorie")
+    st.header(" Contexte & Théorie")
     st.caption(
         "D'où vient ce framework, comment fonctionne un pipeline RAG, et pourquoi chacune de ses "
         "étapes constitue une surface d'attaque. De quoi présenter le projet à un public non technique — "
@@ -510,7 +510,7 @@ def render_context_page():
 
     st.divider()
 
-    st.subheader("🏗️ Le pipeline RAG, étape par étape")
+    st.subheader(" Le pipeline RAG, étape par étape")
     st.caption("Chaque flèche est un point de passage — donc une surface d'attaque potentielle.")
     n = len(PIPELINE_MODULES)
     widths = []
@@ -534,7 +534,7 @@ def render_context_page():
                 unsafe_allow_html=True,
             )
 
-    with st.expander("🔬 Approfondir chaque module (rôle, limites de sécurité, hypothèses testées)"):
+    with st.expander(" Approfondir chaque module (rôle, limites de sécurité, hypothèses testées)"):
         tabs = st.tabs([m["title"].split("—")[0].strip() for m in PIPELINE_MODULES])
         for tab, deep_dive in zip(tabs, MODULE_DEEP_DIVES):
             with tab:
@@ -542,7 +542,7 @@ def render_context_page():
 
     st.divider()
 
-    st.subheader("🗡️ Les familles d'attaques simulées")
+    st.subheader(" Les familles d'attaques simulées")
     for family, keys in FAMILIES.items():
         st.markdown(f"**{family}**")
         fam_cols = st.columns(len(keys))
@@ -559,7 +559,7 @@ def render_context_page():
 
     st.divider()
 
-    st.subheader("🧠 Quiz rapide")
+    st.subheader(" Quiz rapide")
     st.caption("6 questions pour vérifier ce que vous avez retenu — corrigées immédiatement, sans note à la clé.")
 
     score = 0
@@ -583,17 +583,14 @@ def render_context_page():
     if answered == len(QUIZ_QUESTIONS):
         if score == len(QUIZ_QUESTIONS):
             st.balloons()
-            st.success("🏆 Sans faute ! Vous maîtrisez les bases du framework.")
+            st.success(" Sans faute ! Vous maîtrisez les bases du framework.")
         elif score >= len(QUIZ_QUESTIONS) - 1:
-            st.info("👏 Très solide — un petit détail à revoir.")
+            st.info(" Très solide — un petit détail à revoir.")
         else:
-            st.info("📚 Un bon début — n'hésitez pas à relire les sections ci-dessus.")
+            st.info(" Un bon début — n'hésitez pas à relire les sections ci-dessus.")
 
     st.divider()
-    st.caption(
-        "💡 Cette page s'appuie sur le README du projet. Envoyez le rendu de stage pour l'enrichir avec "
-        "son contenu exact."
-    )
+  
 
 
 # --------------------------------------------------------------------------------------
