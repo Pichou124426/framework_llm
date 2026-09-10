@@ -4,6 +4,27 @@
 
 Le développement de ce framework s'inscrit dans le cadre d'un stage d'une durée de 6 semaines, effectué par un étudiant en deuxième année d'école d'informatique. L'objectif est de réaliser un framework simulant un environnement RAG complet, constitué de modules indépendants dont les paramètres sont individuellement modifiables. Ce framework permet ainsi de comprendre concrètement l'impact de différentes attaques sur une architecture RAG. Le point de vue est offensif, dans l'idée de mieux comprendre les attaques et les protections efficaces afin de rendre les RAG de demain plus sécurisés.
 
+## Installation rapide
+# 1. Créer et activer l'environnement virtuel Python
+python -m venv rag-env
+.\rag-env\Scripts\Activate.ps1
+
+# 2. Installer les dépendances
+pip install -r requirements.txt
+
+# 3. Lancer les conteneurs Docker (ollama + chromadb)
+docker compose up -d
+
+# 4. Extraire l'archive de données fournie
+Expand-Archive -Path .\chroma_data.zip -DestinationPath .\chroma_export
+
+# 5. Importer les données dans le conteneur chromadb
+docker cp .\chroma_export\. chromadb:/data
+docker restart chromadb
+
+# 6. Vérifier que tout fonctionne (doit renvoyer un nombre > 0)
+# http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections/<ID_COLLECTION>/count
+
 ---
 
 ## Découverte de l'architecture
