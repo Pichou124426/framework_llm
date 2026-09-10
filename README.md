@@ -23,6 +23,9 @@ Expand-Archive -Path .\chroma_data.zip -DestinationPath .\chroma_export
 # Importer les données dans le conteneur chromadb
 docker cp .\chroma_export\. chromadb:/data
 docker restart chromadb
+
+# Lance l'application
+streamlit run .\streamlit_app.py
 ```
 
 Vérifier que tout fonctionne en ouvrant cette URL dans un navigateur (doit renvoyer un nombre de documents supérieur à 0) :
